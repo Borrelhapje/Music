@@ -1,4 +1,4 @@
-FROM node:20-alpine as build
+FROM node:22-alpine as build
 COPY . .
 RUN npm ci
 RUN npx vite build
