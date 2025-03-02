@@ -1,4 +1,4 @@
-import { StrictMode, startTransition, useEffect, useMemo, useState } from 'react';
+import { StrictMode, startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import styles from './style.module.css';
 
@@ -13,9 +13,69 @@ fetch('/list')
 const Application = ({ files }: { files: Song[] }) => {
     const [playlist, setPlaylist] = useState<Song[]>(files.slice(0, 300));
     const [current, setCurrent] = useState<number>(0);
-    useEffect(() => { 
-        document.title = "Music " + playlist.at(current)?.Title;
+    useEffect(() => {
+        const cur = playlist.at(current);
+        if (!cur) {
+            return;
+        }
+        document.title = "Music " + cur.Title;
+        navigator.mediaSession.metadata = {
+            album: cur.Album,
+            artist: cur.Artist,
+            title: cur.Title,
+            artwork: []
+        }
     }, [current, playlist]);
+    const ref = useRef<HTMLAudioElement>(null);
+    useEffect(() => {
+        const fixPosition = () => {
+            if (!ref.current) {
+                return;
+            } 
+            navigator.mediaSession.setPositionState({
+            duration: ref.current.duration,
+            playbackRate: ref.current.playbackRate,
+            position: ref.current.currentTime
+          });
+        }
+        navigator.mediaSession.setActionHandler("nexttrack", () => {
+            setCurrent(prev => prev + 1);
+            fixPosition();
+        });
+        navigator.mediaSession.setActionHandler("previoustrack", () => {
+            setCurrent(prev => prev - 1);
+            fixPosition();
+        });
+        navigator.mediaSession.setActionHandler("play", () => {
+            ref.current?.play();
+            fixPosition();
+        });
+        navigator.mediaSession.setActionHandler("pause", () => {
+            ref.current?.pause();
+            fixPosition();
+        });
+        navigator.mediaSession.setActionHandler("seekbackward", () => {
+            if (!ref.current) {
+                return;
+            }
+            ref.current.currentTime = Math.max(0, ref.current.currentTime - 10);
+            fixPosition();
+        });
+        navigator.mediaSession.setActionHandler("seekforward", () => {
+            if (!ref.current) {
+                return;
+            }
+            ref.current.currentTime = Math.min(ref.current.duration, ref.current.currentTime + 10);
+            fixPosition();
+        });
+        navigator.mediaSession.setActionHandler("seekto", (e) => {
+            if (!ref.current) {
+                return;
+            }
+            ref.current.currentTime = e.seekTime;
+            fixPosition();
+        });
+    }, []);
     return <StrictMode>
         <button onClick={(e) => setPlaylist(shuffle(files).slice(0,300))}>Play random</button>
         <div style={{maxHeight: '500px', display: 'flex', overflow: 'scroll'}}>
@@ -44,7 +104,9 @@ const Application = ({ files }: { files: Song[] }) => {
                     <td onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPlaylist(prev => prev.filter(s => s.Id !== song.Id)) }}>X</td>
             </tr>)}
             </table></div>
-        <audio controls src={`${playlist.at(current)?.Path ?? ''}`} autoPlay onEnded={(e) => setCurrent(prev => prev + 1)}></audio>
+        <audio ref={ref} controls src={`${playlist.at(current)?.Path ?? ''}`} autoPlay onStalled={(e) => {
+            
+        }} onEnded={(e) => setCurrent(prev => prev + 1)}></audio>
         <Searcher addToList={(file, append) => startTransition(() => {
             if (append) {
                 setPlaylist(prev => {
