@@ -19,12 +19,16 @@ const Application = ({ files }: { files: Song[] }) => {
             return;
         }
         document.title = "Music " + cur.Title;
-        navigator.mediaSession.metadata = {
+        navigator.mediaSession.metadata = new MediaMetadata({
             album: cur.Album,
             artist: cur.Artist,
             title: cur.Title,
-            artwork: []
-        }
+            artwork: [
+                {
+                    src: ""
+                }
+            ]
+        })
     }, [current, playlist]);
     const ref = useRef<HTMLAudioElement>(null);
     useEffect(() => {
