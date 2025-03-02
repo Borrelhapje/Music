@@ -54,20 +54,6 @@ const Application = ({ files }: { files: Song[] }) => {
             ref.current?.pause();
             fixPosition();
         });
-        navigator.mediaSession.setActionHandler("seekbackward", () => {
-            if (!ref.current) {
-                return;
-            }
-            ref.current.currentTime = Math.max(0, ref.current.currentTime - 10);
-            fixPosition();
-        });
-        navigator.mediaSession.setActionHandler("seekforward", () => {
-            if (!ref.current) {
-                return;
-            }
-            ref.current.currentTime = Math.min(ref.current.duration, ref.current.currentTime + 10);
-            fixPosition();
-        });
         navigator.mediaSession.setActionHandler("seekto", (e) => {
             if (!ref.current) {
                 return;
