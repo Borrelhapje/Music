@@ -10,6 +10,19 @@ fetch('/list')
         createRoot(div).render(<Application files={shuffle(songs as Song[])} />);
     });
 
+function fetchData(url: string): Promise<string> {
+    return fetch(url)
+    .then(r => {
+        if (r.ok) {
+            return r.blob().then(URL.createObjectURL);
+        } else {
+            return new Promise((resolve, reject) => {
+                reject("Network not OK: " + r.status);
+            });
+        }
+    })
+}
+
 const Application = ({ files }: { files: Song[] }) => {
     const [playlist, setPlaylist] = useState<Song[]>(files.slice(0, 300));
     const [current, setCurrent] = useState<number>(0);
@@ -30,6 +43,25 @@ const Application = ({ files }: { files: Song[] }) => {
             ]
         })
     }, [current, playlist]);
+    const [networkErrors, setNetworkErrors] = useState(0);
+    const [curData, setCurData] = useState<string>(null);
+    useEffect(() => {
+        const cur = playlist.at(current);
+        if (!cur) {
+            return () => {};
+        }
+        const timeout = setTimeout(() => {
+            fetchData(cur.Path).then(r => {
+                console.log(r);
+                setCurData(r);
+                setNetworkErrors(prev => prev === 0 ? prev : 0);
+            }, err => {
+                console.log(err);
+                setNetworkErrors(prev => prev + 1);
+            });
+        }, networkErrors === 0 ? 1 : Math.min(30000, Math.pow(networkErrors, 2)));
+        return () => clearTimeout(timeout);
+    }, [current, playlist, networkErrors]);
     const ref = useRef<HTMLAudioElement>(null);
     useEffect(() => {
         const fixPosition = () => {
@@ -94,9 +126,7 @@ const Application = ({ files }: { files: Song[] }) => {
                     <td onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPlaylist(prev => prev.filter(s => s.Id !== song.Id)) }}>X</td>
             </tr>)}
             </table></div>
-        <audio ref={ref} controls src={`${playlist.at(current)?.Path ?? ''}`} autoPlay onStalled={(e) => {
-            
-        }} onEnded={(e) => setCurrent(prev => prev + 1)}></audio>
+        <audio ref={ref} controls src={curData} autoPlay onEnded={(e) => setCurrent(prev => prev + 1)}></audio>
         <Searcher addToList={(file, append) => startTransition(() => {
             if (append) {
                 setPlaylist(prev => {
