@@ -29,6 +29,9 @@ const Application = ({ files }: { files: Song[] }) => {
     useEffect(() => {
         const cur = playlist.at(current);
         if (!cur) {
+            const copy = [...files];
+            setPlaylist(shuffle(copy).slice(0,300));
+            setCurrent(0);
             return;
         }
         document.title = "Music " + cur.Title;
