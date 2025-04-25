@@ -3,6 +3,6 @@ COPY . .
 RUN npm ci
 RUN npx vite build
 
-FROM nginx:1.27.5-alpine
+FROM nginx:1.28.0-alpine
 COPY --from=build /dist /usr/share/nginx/html 
 
