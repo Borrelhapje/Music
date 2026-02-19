@@ -80,6 +80,7 @@ const Application = ({ files, initialList, initialCur }: { files: Song[], initia
             fixPosition();
         });
     }, []);
+    const [prevTimeout, setPrevTimeout] = useState<number>();
     return <StrictMode>
         <button onClick={(e) => setPlaylist(shuffle(files).slice(0,300))}>Play random</button>
         <div style={{maxHeight: '500px', display: 'flex', overflow: 'scroll'}}>
@@ -110,14 +111,23 @@ const Application = ({ files, initialList, initialCur }: { files: Song[], initia
             </table></div>
         <audio ref={ref} controls src={`${playlist.at(current)?.Path ?? ''}`} autoPlay onEnded={(e) => setCurrent(prev => prev + 1)}
                 onError={(e) => {
-                    console.log(e);
-                    setTimeout(() => setCurrent(prev => prev + 1), 15000);
+                    if (prevTimeout !== undefined) {
+                        clearTimeout(prevTimeout);
+                    }
+                    setPrevTimeout(setTimeout(() => setCurrent(prev => prev + 1), 15000));
+                }}
+                onCanPlay={(e) => {
+                    if (prevTimeout !== undefined) {
+                        clearTimeout(prevTimeout);
+                    } 
                 }}
                 onStalled={(e) => {
-                    console.log(e);
-                    setTimeout(() => {
+                    if (prevTimeout !== undefined) {
+                        clearTimeout(prevTimeout);
+                    }
+                    setPrevTimeout(setTimeout(() => {
                         ref.current?.load();
-                    }, 15000);
+                    }, 15000));
                 }}></audio>
         <Searcher addToList={(file, append) => startTransition(() => {
             if (append) {
