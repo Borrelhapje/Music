@@ -10,19 +10,6 @@ fetch('/list')
         createRoot(div).render(<Application files={shuffle(songs as Song[])} />);
     });
 
-function fetchData(url: string): Promise<string> {
-    return fetch(url)
-    .then(r => {
-        if (r.ok) {
-            return r.blob().then(URL.createObjectURL);
-        } else {
-            return new Promise((resolve, reject) => {
-                reject("Network not OK: " + r.status);
-            });
-        }
-    })
-}
-
 const Application = ({ files }: { files: Song[] }) => {
     const [playlist, setPlaylist] = useState<Song[]>(files.slice(0, 300));
     const [current, setCurrent] = useState<number>(0);
@@ -155,8 +142,9 @@ const Searcher = ({ addToList, files }: { addToList: Adder, files: Song[] }) => 
             setFilteredFiles([]);
             return;
         }
+        const lowerSearch = search.toLowerCase();
         const newFilter = files.filter(file => {
-            return file.Artist.toLowerCase().includes(search) || file.Album.toLowerCase().includes(search) || file.Title.toLowerCase().includes(search);
+            return file.Artist.toLowerCase().includes(lowerSearch) || file.Album.toLowerCase().includes(lowerSearch) || file.Title.toLowerCase().includes(lowerSearch);
         });
         newFilter.sort();
         setFilteredFiles(newFilter);
@@ -202,14 +190,14 @@ const SearchResults = ({ songs, addToList }: { songs: Song[], addToList: Adder }
         return result;
     }, [songs]);
     return <ul>
-        <RenderTree node={{ name: '', nodes: artists }} addToList={addToList}/>
+        <RenderTree node={{ name: '', nodes: artists }} addToList={addToList} level={0}/>
     </ul>;
 };
 
-const RenderTree = ({ node, addToList }: { node: TreeNode, addToList: Adder }) => {
+const RenderTree = ({ node, addToList, level }: { node: TreeNode, addToList: Adder, level: number}) => {
     const [ulOpen, setUlOpen] = useState(false);
     useEffect(() => {
-        setUlOpen(node.nodes.size <= 3);
+        setUlOpen(level === 0 || node.nodes.size <= 3);
     }, [node.nodes]);
     const list: TreeNode[] = [];
     for (const value of node.nodes.values()) {
@@ -229,7 +217,7 @@ const RenderTree = ({ node, addToList }: { node: TreeNode, addToList: Adder }) =
             }
         </span>
         <ul className={`${styles.nested} ${ulOpen ? styles.active : ''}`} >
-            {list.map(node => <RenderTree node={node} addToList={addToList} />)}
+            {list.map(node => <RenderTree node={node} addToList={addToList} level={level+1} />)}
         </ul>
     </li>
 }

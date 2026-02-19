@@ -6,6 +6,10 @@
 ul {
     list-style-type: none;
 }
+
+ul:nth-child(even) {
+    background-color: aliceblue;
+}
 /* Style the caret/arrow */
 .caret {
     cursor: pointer;
