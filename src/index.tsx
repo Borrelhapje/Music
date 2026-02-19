@@ -7,12 +7,20 @@ fetch('/list')
     .then(songs => {
         const div = document.createElement('div');
         document.body.appendChild(div);
-        createRoot(div).render(<Application files={shuffle(songs as Song[])} />);
+        const prevList = localStorage.getItem("playlist");
+        let initialList: Song[] = [];
+        let initialCur = 0;
+        if (prevList !== null) {
+            const parsed = JSON.parse(prevList);
+            initialList = parsed.playlist;
+            initialCur = parsed.current;
+        }
+        createRoot(div).render(<Application files={shuffle(songs as Song[])} initialList={initialList} initialCur={initialCur} />);
     });
 
-const Application = ({ files }: { files: Song[] }) => {
-    const [playlist, setPlaylist] = useState<Song[]>(files.slice(0, 300));
-    const [current, setCurrent] = useState<number>(0);
+const Application = ({ files, initialList, initialCur }: { files: Song[], initialList: Song[], initialCur: number }) => {
+    const [playlist, setPlaylist] = useState<Song[]>(initialList);
+    const [current, setCurrent] = useState<number>(initialCur);
     useEffect(() => {
         const cur = playlist.at(current);
         if (!cur) {
@@ -21,6 +29,7 @@ const Application = ({ files }: { files: Song[] }) => {
             setCurrent(0);
             return;
         }
+        localStorage.setItem("playlist", JSON.stringify({current: current, playlist: playlist.map(s => s.Id)}));
         document.title = "Music " + cur.Title;
         navigator.mediaSession.metadata = new MediaMetadata({
             album: cur.Album,
