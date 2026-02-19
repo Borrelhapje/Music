@@ -4,7 +4,7 @@ import styles from './style.module.css';
 
 fetch('/list')
     .then(r => r.json())
-    .then(songs => {
+    .then((songs: Song[]) => {
         const div = document.createElement('div');
         document.body.appendChild(div);
         const prevList = localStorage.getItem("playlist");
@@ -12,8 +12,10 @@ fetch('/list')
         let initialCur = 0;
         if (prevList !== null) {
             const parsed = JSON.parse(prevList);
-            initialList = parsed.playlist;
+            initialList = parsed.playlist.map((id: number) => songs.find(song => song.Id === id));
             initialCur = parsed.current;
+        } else {
+            initialList = shuffle(songs as Song[]);
         }
         createRoot(div).render(<Application files={shuffle(songs as Song[])} initialList={initialList} initialCur={initialCur} />);
     });
