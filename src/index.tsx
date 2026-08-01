@@ -120,14 +120,6 @@ const Application = ({ files, initialList, initialCur }: { files: Song[], initia
                     if (prevTimeout !== undefined) {
                         clearTimeout(prevTimeout);
                     } 
-                }}
-                onStalled={(e) => {
-                    if (prevTimeout !== undefined) {
-                        clearTimeout(prevTimeout);
-                    }
-                    setPrevTimeout(setTimeout(() => {
-                        ref.current?.load();
-                    }, 15000));
                 }}></audio>
         <Searcher addToList={(file, append) => startTransition(() => {
             if (append) {

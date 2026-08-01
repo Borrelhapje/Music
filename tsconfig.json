@@ -6,7 +6,6 @@
         "target": "es6",
         "lib": ["es2022", "DOM"],
         "jsx": "react-jsx",
-        "allowJs": false,
-        "moduleResolution": "node"
+        "allowJs": false
     }
 }
